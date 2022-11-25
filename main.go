@@ -54,7 +54,12 @@ type Field struct {
 	Short bool   `json:"short,omitempty"`
 }
 
-func main() {
+type SlackResponse struct {
+  messageId string
+}
+
+
+func main() string {
 	endpoint := os.Getenv(EnvSlackWebhook)
 	if endpoint == "" {
 		fmt.Fprintln(os.Stderr, "URL is required")
@@ -211,10 +216,15 @@ func main() {
 		},
 	}
 
-	if err := send(endpoint, msg); err != nil {
+  response := SlackResponse{}
+	if err := send(endpoint, response, msg); err != nil {
 		fmt.Fprintf(os.Stderr, "Error sending message: %s\n", err)
 		os.Exit(2)
 	}
+
+  fmt.Fprintf(os.Stdout, "제발!!!!!!: %s\n", response.messageId)
+
+	return response.messageId
 }
 
 func envOr(name, def string) string {
@@ -224,7 +234,7 @@ func envOr(name, def string) string {
 	return def
 }
 
-func send(endpoint string, msg Webhook) error {
+func send(endpoint string, target interface{}, msg Webhook) error {
 	enc, err := json.Marshal(msg)
 	if err != nil {
 		return err
@@ -239,5 +249,6 @@ func send(endpoint string, msg Webhook) error {
 		return fmt.Errorf("Error on message: %s\n", res.Status)
 	}
 	fmt.Println(res.Status)
-	return nil
+
+	return json.NewDecoder(res.Body).Decode(target)
 }
